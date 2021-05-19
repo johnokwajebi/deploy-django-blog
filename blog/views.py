@@ -6,7 +6,8 @@ from django.views.generic import ListView, DetailView
 from django.views.generic.edit import (
     CreateView, UpdateView, DeleteView)
 from django.urls import reverse_lazy
-from .models import Post
+from .models import Post, Comment
+from .forms import NewCommentForm
 
 # Create your views here.
 
@@ -17,6 +18,26 @@ class BlogListView(ListView):
 class BlogDetailView(DetailView):
     model = Post
     template_name = 'post_detail.html'
+
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+
+        comments_connected = Comment.objects.filter(
+            comment_post=self.get_object())
+        data['comments'] = comments_connected
+        if self.request.user.is_authenticated:
+            data['comment_form'] = NewCommentForm(instance=self.request.user)
+
+        return data
+
+    def post(self, request, *args, **kwargs):
+        new_comment = Comment(comment=request.POST.get('comment'),
+                                  author=self.request.user,
+                                  comment_post=self.get_object())
+        new_comment.save()
+        return self.get(self, request, *args, **kwargs)
+
 
 class BlogCreateView(LoginRequiredMixin, CreateView):
     model = Post

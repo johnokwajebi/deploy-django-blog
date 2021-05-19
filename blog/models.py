@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.urls import reverse 
 
@@ -6,7 +7,7 @@ from django.urls import reverse
 class Post(models.Model):
     title = models.CharField(max_length=200)
     body =models.TextField()
-    date = models.DateTimeField(auto_now_add=True)
+    date_posted = models.DateTimeField(auto_now_add=True) ### change to date posted
     author = models.ForeignKey(
         'auth.User',
         on_delete=models.CASCADE,
@@ -19,13 +20,15 @@ class Post(models.Model):
     def get_absolute_url(self):
         return reverse('post_detail', args=[str(self.id)])
 
-
+    @property
+    def number_of_comments(self):
+        return Comment.objects.filter(comment_post=self).count()
 
 
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(
+    comment_post = models.ForeignKey(
         Post,
          on_delete=models.CASCADE,
          related_name = 'comments',
@@ -40,3 +43,7 @@ class Comment(models.Model):
 
     def get_absolute_url(self):
         return reverse('home') # make a change here later
+
+
+
+    
